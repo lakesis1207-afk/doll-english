@@ -242,17 +242,28 @@ function qBalloon() {
   G.current.together = () => { hintTarget(); say(["hint", "col_" + key]); };
 }
 
+// 4단계 캐릭터: 어린아이 그림 (팔은 어깨·팔꿈치, 다리는 엉덩이를 축으로 움직여요)
+const KID_SVG = `<svg class="kid" viewBox="0 0 120 170" aria-hidden="true"><g class="k-all">
+<g class="k-tl"><rect x="47" y="118" width="10" height="20" rx="5" fill="#378ADD"/><rect x="47" y="134" width="10" height="20" rx="5" fill="#378ADD"/><rect x="42" y="150" width="16" height="8" rx="4" fill="#444441"/></g>
+<g class="k-tr"><rect x="63" y="118" width="10" height="20" rx="5" fill="#378ADD"/><rect x="63" y="134" width="10" height="20" rx="5" fill="#378ADD"/><rect x="62" y="150" width="16" height="8" rx="4" fill="#444441"/></g>
+<rect x="42" y="74" width="36" height="48" rx="14" fill="#F0997B"/>
+<circle cx="60" cy="46" r="26" fill="#FFD9B8"/>
+<path d="M34 44 Q36 16 60 18 Q86 18 86 44 Q78 30 62 30 Q46 30 34 44Z" fill="#633806"/>
+<g class="k-eyes"><g class="k-blink"><circle cx="50" cy="48" r="3.2" fill="#2C2C2A"/><circle cx="70" cy="48" r="3.2" fill="#2C2C2A"/></g></g>
+<circle cx="44" cy="57" r="4" fill="#F4C0D1"/><circle cx="76" cy="57" r="4" fill="#F4C0D1"/>
+<path d="M53 59 Q60 66 67 59" stroke="#993C1D" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<g class="k-ul"><rect x="40" y="78" width="9" height="20" rx="4.5" fill="#D85A30"/><g class="k-fl"><rect x="40" y="94" width="9" height="18" rx="4.5" fill="#FFD9B8"/><circle cx="44.5" cy="113" r="5.5" fill="#FFD9B8"/></g></g>
+<g class="k-ur"><rect x="71" y="78" width="9" height="20" rx="4.5" fill="#D85A30"/><g class="k-fr"><rect x="71" y="94" width="9" height="18" rx="4.5" fill="#FFD9B8"/><circle cx="75.5" cy="113" r="5.5" fill="#FFD9B8"/></g></g>
+<g class="k-pop"><path d="M60 76 L60 70 M50 80 L46 76 M70 80 L74 76" stroke="#EF9F27" stroke-width="2.5" stroke-linecap="round"/></g>
+</g></svg>`;
+
 // ---------- 4단계: 따라 해요 (TPR: 몸으로 따라 하며 배우기, 틀림 없음) ----------
 function qAction() {
   const a = pickAvoid(firstTime() ? L.ACTIONS.slice(0, 4) : L.ACTIONS, x => x.key);
   Object.assign(G.current, { answer: a.key, show: a.ico, answerKey: "act_" + a.key });
   $("choices").style.display = "none";
-  // 인형 얼굴(사진 또는 곰) + 몸, 팔, 다리를 그려서 동작마다 움직여요
-  const doll = el("div", "figure");
-  const head = el("div", "fig-head");
-  paintDoll(head);
-  doll.append(el("div", "leg l"), el("div", "leg r"), el("div", "fig-body"),
-    el("div", "arm l", '<i class="fig-hand"></i>'), el("div", "arm r", '<i class="fig-hand"></i>'), head);
+  // 그린 아이가 동작을 먼저 보여 줘요 (kid-동작 이름 클래스로 움직임)
+  const doll = el("div", "kid-wrap", KID_SVG);
   const box = el("div", "act-stage");
   box.append(doll);
   const star = el("button", "star-btn", "⭐");
@@ -263,15 +274,15 @@ function qAction() {
   $("bubble").textContent = a.text;
   const q = G.current;
   q.keys = ["act_" + a.key];
-  // 말 → 인형이 먼저 보여 주기 → 한 번 더 말하고 별 켜기
+  // 말 → 아이가 먼저 보여 주기 → 한 번 더 말하고 별 켜기
   q.replay = async () => {
     G.busy = true;
     star.disabled = true;
-    doll.classList.remove("fig-" + a.key);
+    doll.classList.remove("kid-" + a.key);
     await say([intro("act_intro"), "act_" + a.key]);
     if (G.current !== q) return;
     void doll.offsetWidth;
-    doll.classList.add("fig-" + a.key);
+    doll.classList.add("kid-" + a.key);
     await sleep(2400);
     if (G.current !== q) return;
     G.busy = false;

@@ -80,7 +80,6 @@
     { key: "clap", ico: "👏", text: "Clap your hands!" },
     { key: "nose", ico: "👃", text: "Touch your nose!" },
     { key: "stomp", ico: "🦶", text: "Stomp your feet!" },
-    { key: "turn", ico: "🔄", text: "Turn around!" },
     { key: "wave", ico: "👋", text: "Wave your hands!" },
     { key: "sit", ico: "⬇️", text: "Sit down!" },
     { key: "stand", ico: "🧍", text: "Stand up!" },
