@@ -58,16 +58,17 @@ test("알파벳 26개, 묶음이 빠짐없이 한 번씩", () => {
 
 test("앱이 쓰는 소리 파일이 모두 있음", () => {
   const keys = [
-    ...L.NOUNS.flatMap(n => ["w_" + n.key, "wh_" + n.key, "k_" + n.key]),
+    ...L.NOUNS.flatMap(n => ["w_" + n.key, "wh_" + n.key, ...(n.ko ? ["k_" + n.key, "pl_" + n.key] : [])]),
+    ...L.PRAISE.map(p => p[1]),
     ...L.COLORS.flatMap(c => ["col_" + c.key, "pop_" + c.key]),
     ...L.ACTIONS.map(a => "act_" + a.key),
     ...Object.keys(L.PHRASES),
     ...L.GREETS.flatMap(g => ["greet_" + g.scene, g.reply]),
     ...L.ABC.map(a => a.key),
     ...L.STORIES.flatMap(s => s.pages.map(p => p.key)),
-    "hello_eng", "card_intro", "listen_intro", "balloon_intro", "act_intro", "act_done", "pair_intro",
+    "hello_eng", "card_intro", "listen_intro", "balloon_intro", "act_intro", "act_done", "thanks",
     "greet_q", "abc_intro", "book_intro", "book_parent", "book_next", "book_end",
-    "mission_red", "mission_hello", "mission_jump", "e_good", "e_great", "e_again",
+    "mission_red", "mission_hello", "mission_jump", "e_again",
     "hint", "cheer0", "cheer1", "cheer2", "locked", "clear", "sticker", "opened", "sleepy",
     "btn_home", "btn_speaker", "btn_next", "btn_last",
   ];
@@ -80,6 +81,12 @@ test("서비스 워커가 소리 파일을 빠짐없이 저장함", () => {
   const listed = new Set([...src.matchAll(/"([a-z0-9_]+)"/g)].map(m => m[1]));
   const missing = [...SOUNDS].filter(k => !listed.has(k));
   assert.deepStrictEqual(missing, []);
+});
+
+test("단어 카드 주제마다 단어가 있고, 부탁 문장은 첫 글자 대문자", () => {
+  for (const t of L.THEMES) assert.ok(L.NOUNS.filter(n => n.theme === t).length >= 4, t);
+  assert.ok(L.NOUNS.every(n => L.THEMES.includes(n.theme)));
+  assert.strictEqual(L.pleaseText("apple"), "Apple, please!");
 });
 
 test("randomDollName: 후보 중 하나", () => {

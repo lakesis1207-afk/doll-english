@@ -5,7 +5,6 @@ const { rand, pick, shuffle, range, josa } = L;
 const MAX_PHOTOS = 5;
 const REST_MIN = 10; // 하루 놀이 시간(분)
 // 맞히면 영어 칭찬 → 정답 단어를 한 번 더 (Good job! → Dog!)
-const PRAISE = [["Good job!", "e_good"], ["Great listening!", "e_great"]];
 const STICKERS = ["🐶", "🍎", "🐰", "🍌", "🐻", "🍓", "🐼", "🍇", "🦁", "🍉", "🐯", "🍑", "🐸", "🍒", "🐧", "🍍"];
 
 // ---------- 도우미 ----------

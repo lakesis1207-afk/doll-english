@@ -160,9 +160,11 @@ button:focus-visible { outline: 3px solid var(--pink-dark); outline-offset: 2px;
 @keyframes boom { 0% { transform: translate(-50%, -50%) scale(.4); } 70% { transform: translate(-50%, -50%) scale(1.4); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
 @keyframes shard { to { transform: translate(var(--dx), var(--dy)) rotate(200deg) scale(.5); opacity: 0; } }
 
-.listen-btn { width: 170px; height: 170px; border-radius: 50%; background: #fff; box-shadow: var(--shadow); font-size: 92px; line-height: 1; animation: bob 2.4s ease-in-out infinite; }
 .choice.emoji { min-height: 140px; font-size: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .choice.emoji small { font-size: 17px; color: var(--ink); }
+/* 2단계: 가운데 큰 그림 보기 */
+.big-choices { width: 100%; margin: 0; gap: 12px; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+.big-choices .choice.emoji { min-height: 150px; font-size: min(92px, 20vw); }
 .tip { margin: 0 0 4px; font-size: 14px; color: var(--muted); text-align: center; line-height: 1.4; }
 .tip:empty { display: none; }
 .swatch-big { display: inline-block; width: 72px; height: 72px; border-radius: 50%; box-shadow: inset 0 -6px 0 rgba(0,0,0,.12); }
@@ -183,37 +185,70 @@ button:focus-visible { outline: 3px solid var(--pink-dark); outline-offset: 2px;
 .cards.abc .card b i { font-style: normal; font-size: 32px; margin-left: 4px; color: #4a8ad8; }
 .cards.abc .card .pic { font-size: 34px; line-height: 1.1; }
 
-/* 4. 따라 해요 */
-.act-stage { position: relative; width: 220px; height: 220px; display: grid; place-items: center; }
-.act-doll { width: 180px; height: 180px; border-radius: 50%; border: 7px solid #fff; box-shadow: var(--shadow); font-size: 150px; }
-.act-ico { position: absolute; right: -6px; bottom: 0; font-size: 64px; filter: drop-shadow(0 3px 2px rgba(0,0,0,.15)); }
-.act-jump  { animation: a-jump .6s ease-in-out 4; }
-.act-clap  { animation: a-clap .3s ease-in-out 8; }
-.act-nose  { animation: a-nose .8s ease-in-out 3; }
-.act-stomp { animation: a-stomp .4s ease-in-out 6; }
-.act-turn  { animation: a-turn 1.2s ease-in-out 2; }
-.act-wave  { animation: a-wave .5s ease-in-out 5; }
-.act-sit   { animation: a-sit 2.4s ease-in-out 1 forwards; }
-.act-stand { animation: a-stand 2.4s ease-in-out 1 forwards; }
-@keyframes a-jump { 50% { transform: translateY(-50px); } }
-@keyframes a-clap { 50% { transform: scale(1.12); } }
-@keyframes a-nose { 50% { transform: scale(1.2) translateY(-6px); } }
-@keyframes a-stomp { 25% { transform: translateY(-12px) rotate(-6deg); } 75% { transform: translateY(-12px) rotate(6deg); } }
-@keyframes a-turn { to { transform: rotateY(360deg); } }
-@keyframes a-wave { 25% { transform: rotate(-14deg); } 75% { transform: rotate(14deg); } }
-@keyframes a-sit { 40%, 100% { transform: translateY(40px) scaleY(.8); } }
-@keyframes a-stand { 0% { transform: translateY(40px) scaleY(.8); } 50%, 100% { transform: translateY(-10px) scaleY(1.05); } }
+/* 4. 따라 해요: 인형 얼굴 + 그린 몸 (팔은 어깨, 다리는 엉덩이를 축으로 돌아요) */
+.figure { position: relative; width: 200px; height: 262px; --shirt: #ff8fb1; --sleeve: #f2709a; --skin: #ffd9b8; --pants: #5aa9f5; }
+.fig-head { position: absolute; left: 45px; top: 0; width: 110px; height: 110px; border-radius: 50%; border: 5px solid #fff; box-shadow: var(--shadow); font-size: 100px; z-index: 2; }
+.fig-body { position: absolute; left: 62px; top: 100px; width: 76px; height: 90px; border-radius: 30px 30px 18px 18px; background: var(--shirt); box-shadow: inset 0 -8px 0 rgba(0,0,0,.08); z-index: 1; }
+.arm { position: absolute; top: 112px; width: 18px; height: 72px; border-radius: 9px; background: var(--sleeve); transform-origin: 50% 9px; z-index: 3; }
+.arm.l { left: 56px; transform: rotate(18deg); }
+.arm.r { left: 126px; transform: rotate(-18deg); }
+.fig-hand { position: absolute; left: -3px; bottom: -14px; width: 24px; height: 24px; border-radius: 50%; background: var(--skin); }
+.leg { position: absolute; top: 182px; width: 22px; height: 70px; border-radius: 10px; background: var(--pants); transform-origin: 50% 0; }
+.leg::after { content: ""; position: absolute; bottom: -6px; width: 34px; height: 14px; border-radius: 8px; background: #4a3b47; }
+.leg.l { left: 72px; } .leg.l::after { right: 0; }
+.leg.r { left: 106px; } .leg.r::after { left: 0; }
+/* 손뼉: 두 손이 가운데에서 만나요 */
+.fig-clap .arm.l { animation: f-clap-l .3s ease-in-out 8; }
+.fig-clap .arm.r { animation: f-clap-r .3s ease-in-out 8; }
+@keyframes f-clap-l { 0%, 100% { transform: rotate(30deg); } 50% { transform: rotate(-32deg); } }
+@keyframes f-clap-r { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(32deg); } }
+/* 코 만지기: 오른손이 얼굴로 */
+.fig-nose .arm.r { animation: f-nose 2.4s ease-in-out 1; }
+@keyframes f-nose { 25%, 80% { transform: rotate(150deg); } }
+/* 손 흔들기: 두 팔을 위로 들고 흔들어요 */
+.fig-wave .arm.l { animation: f-wave-l .5s ease-in-out 5; }
+.fig-wave .arm.r { animation: f-wave-r .5s ease-in-out 5; }
+@keyframes f-wave-l { 0%, 100% { transform: rotate(140deg); } 50% { transform: rotate(170deg); } }
+@keyframes f-wave-r { 0%, 100% { transform: rotate(-140deg); } 50% { transform: rotate(-170deg); } }
+/* 점프: 다리를 굽혔다가 뛰어올라요 */
+.fig-jump { animation: f-jump .6s ease-in-out 4; }
+.fig-jump .leg { animation: f-bend .6s ease-in-out 4; }
+.fig-jump .arm.l { animation: f-up-l .6s ease-in-out 4; }
+.fig-jump .arm.r { animation: f-up-r .6s ease-in-out 4; }
+@keyframes f-jump { 25% { transform: translateY(10px); } 55% { transform: translateY(-50px); } }
+@keyframes f-bend { 25% { transform: scaleY(.8); } 55% { transform: scaleY(1); } }
+@keyframes f-up-l { 55% { transform: rotate(150deg); } }
+@keyframes f-up-r { 55% { transform: rotate(-150deg); } }
+/* 발 구르기: 다리를 번갈아 들어요 */
+.fig-stomp .leg.l { animation: f-lift .5s ease-in-out 5; }
+.fig-stomp .leg.r { animation: f-lift .5s ease-in-out .25s 5; }
+@keyframes f-lift { 50% { transform: translateY(-18px); } }
+/* 돌기 */
+.fig-turn { animation: f-turn 1.2s ease-in-out 2; }
+@keyframes f-turn { to { transform: rotateY(360deg); } }
+/* 앉기 / 일어나기: 다리가 접히고 몸이 내려가요 (발은 제자리) */
+.fig-sit { animation: f-sit 2.4s ease-in-out 1 forwards; }
+.fig-sit .leg { animation: f-leg-sit 2.4s ease-in-out 1 forwards; }
+@keyframes f-sit { 40%, 100% { transform: translateY(35px); } }
+@keyframes f-leg-sit { 40%, 100% { transform: scaleY(.5); } }
+.fig-stand { animation: f-stand 2.4s ease-in-out 1 forwards; }
+.fig-stand .leg { animation: f-leg-stand 2.4s ease-in-out 1 forwards; }
+.fig-stand .arm.l { animation: f-stretch-l 2.4s ease-in-out 1 forwards; }
+.fig-stand .arm.r { animation: f-stretch-r 2.4s ease-in-out 1 forwards; }
+@keyframes f-stand { 0% { transform: translateY(35px); } 50%, 100% { transform: translateY(-6px); } }
+@keyframes f-leg-stand { 0% { transform: scaleY(.5); } 50%, 100% { transform: scaleY(1); } }
+@keyframes f-stretch-l { 0%, 50% { transform: rotate(18deg); } 75%, 100% { transform: rotate(160deg); } }
+@keyframes f-stretch-r { 0%, 50% { transform: rotate(-18deg); } 75%, 100% { transform: rotate(-160deg); } }
+.act-stage { position: relative; display: grid; place-items: center; padding-top: 10px; }
 .star-btn { width: 120px; height: 120px; border-radius: 50%; background: #fff; box-shadow: var(--shadow); font-size: 70px; line-height: 1; }
 
-/* 5. 한-영 짝꿍 */
-.pairs { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; width: 100%; }
-.pair-col { display: flex; flex-direction: column; gap: 14px; }
-.pair-mid { text-align: center; font-size: 28px; color: var(--gray); }
-.pair { height: 100px; border-radius: 26px; box-shadow: var(--shadow); font-size: 58px; line-height: 1; background: #fff; border: 5px solid transparent; transition: border-color .2s, opacity .3s; }
-.pair.en { color: #fff; font-size: 46px; }
-.pair.sel { border-color: var(--pink-dark); transform: scale(1.04); }
-.pair.matched { border-color: var(--sun); opacity: .75; }
-.pair.en.matched { background: #fff !important; font-size: 58px; }
+/* 5. 영어 친구 도와주기 */
+.help-scene { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.help-talk { position: relative; background: #fff; border-radius: 20px; padding: 10px 20px; font-size: 26px; font-family: "Jua", sans-serif; color: var(--ink); box-shadow: var(--shadow); }
+.help-talk::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -9px; border: 9px solid transparent; border-top-color: #fff; border-bottom: 0; }
+.help-friend { font-size: 120px; line-height: 1; animation: bob 2.4s ease-in-out infinite; }
+.help-friend.happy { animation: card-bounce .6s ease-in-out 2; }
+.flyer { position: fixed; z-index: 20; width: 90px; height: 90px; margin: -45px 0 0 -45px; font-size: 72px; line-height: 90px; text-align: center; pointer-events: none; transition: transform .7s cubic-bezier(.5, -.3, .6, 1); }
 
 /* 6. 인사 놀이 */
 .scene { position: relative; width: 100%; height: min(42dvh, 300px); border-radius: 26px; overflow: hidden; box-shadow: var(--shadow); }
@@ -282,3 +317,14 @@ button:focus-visible { outline: 3px solid var(--pink-dark); outline-offset: 2px;
 .toast.on { opacity: 1; transform: translate(-50%, 0); }
 .reg-hint { margin: 0; font-size: 14px; color: var(--muted); text-align: center; }
 .tile .resume { position: absolute; left: 46px; top: 13px; background: var(--go-next); color: #fff; font-size: 13px; border-radius: 10px; padding: 1px 8px; }
+
+/* 그림책 art 장면 (오리 찾기, 풍선, 잘 자) */
+.book-pic.art { flex-wrap: wrap; overflow: hidden; border-radius: 20px; }
+.book-pic.art .who { font-size: 96px; }
+.book-pic.nope::after { content: "✖"; font-size: 56px; color: var(--pink-dark); }
+.book-pic.found .who:last-child { animation: pop-in .5s ease-out; }
+.book-pic.night { background: linear-gradient(180deg, #2d3a6b, #50609e); }
+.mini-balloon { position: relative; width: 40px; height: 52px; border-radius: 50% 50% 47% 47%; box-shadow: inset -5px -6px 0 rgba(0,0,0,.08); margin: 0 -2px; }
+.mini-balloon::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 24px; background: rgba(0,0,0,.2); }
+.mini-balloon.fly { animation: fly-up 1.8s ease-in forwards; }
+@keyframes fly-up { to { transform: translateY(-220px) rotate(-8deg); opacity: .2; } }

@@ -8,7 +8,7 @@ const STAGES = [
   { ico: "👂", name: "듣고 고르기", sub: "Where is the dog?", color: "var(--sky)",   tip: "맞히면 \"Dog!\" 하고 같이 말해 주세요.", play: () => qListen(), resumable: true },
   { ico: "🎈", name: "색깔 풍선",   sub: "Pop the red balloon!", color: "var(--peach)", tip: "색깔 이름을 같이 말하며 터뜨려요.", play: () => qBalloon(), mission: "mission_red", resumable: true },
   { ico: "🤸", name: "따라 해요",   sub: "Jump! Clap!",       color: "var(--mint)",  tip: "부모님도 같이 몸으로 따라 해 주세요.", play: () => qAction(), mission: "mission_jump", resumable: true },
-  { ico: "🔀", name: "한-영 짝꿍",  sub: "사과 = apple",      color: "var(--sun)",   tip: "왼쪽 그림을 누르고, 같은 뜻 영어 소리를 오른쪽에서 찾아요.", play: () => qPairs() },
+  { ico: "🤝", name: "친구 돕기",   sub: "Apple, please!",    color: "var(--sun)",   tip: "친구가 부탁한 걸 골라 건네줘요. \"Apple, please!\"를 같이 말해 보세요.", play: () => qHelp(), resumable: true },
   { ico: "👋", name: "인사 놀이",   sub: "Hello! Thank you!", color: "var(--lilac)", tip: "집에서도 상황마다 영어로 인사해 보세요.", play: () => qGreet(), mission: "mission_hello", resumable: true },
   { ico: "🔤", name: "알파벳 소리", sub: "A is for apple",    color: "var(--pink)",  tip: "글자를 못 읽어도 괜찮아요. 소리와 그림을 즐겨요.", play: () => qAbc(),
     onFinish: () => { settings.abcGroup = (settings.abcGroup + 1) % L.ABC_GROUPS.length; } },
@@ -95,8 +95,7 @@ function missed() {
 const glowAnswer = () => { const g = G.current.glow && G.current.glow(); if (g) g.classList.add("glow"); };
 
 // 큰 그림 보기 (2~3개). onPick을 주면 직접 처리, 없으면 정답 비교
-function pictureChoices(opts, onPick) {
-  const box = $("choices");
+function pictureChoices(opts, onPick, box = $("choices")) {
   box.style.setProperty("--n", opts.length);
   opts.forEach(o => {
     const b = el("button", "choice emoji", o.html);
@@ -118,7 +117,7 @@ async function celebrate(showHtml, answerKey) {
   G.busy = true;
   stopSay();
   sfx.right();
-  const [text, key] = pick(PRAISE);
+  const [text, key] = pick(L.PRAISE);
   $("cheerSay").textContent = text;
   $("cheerBig").innerHTML = showHtml || "⭐";
   paintDoll($("cheerDoll"));
@@ -175,9 +174,9 @@ function explore(items, introKey, bubble, cls) {
   G.current.glow = () => btns.find((_, i) => !heard.has(i));
 }
 
-// ---------- 1단계: 단어 카드 (동물 ↔ 음식 번갈아) ----------
+// ---------- 1단계: 단어 카드 (동물 → 음식 → 몸 → 탈것 → 동물2 돌아가며) ----------
 function qCards() {
-  const theme = (settings.stars[0] || 0) % 2 ? "food" : "animal";
+  const theme = L.THEMES[(settings.stars[0] || 0) % L.THEMES.length];
   const words = L.NOUNS.filter(n => n.theme === theme);
   explore(words.map(w => ({
     html: `<span class="face">${w.emoji}</span><small class="pic">${w.key}</small>`,
@@ -186,27 +185,23 @@ function qCards() {
 }
 
 // ---------- 2단계: 듣고 고르기 (Where is the dog?) ----------
-// 가운데 큰 귀: 누르면 문제를 다시 들려줘요
-function listenButton() {
-  const b = el("button", "listen-btn", "👂");
-  b.setAttribute("aria-label", "다시 듣기");
-  b.onclick = () => { if (!G.busy && G.current.keys) { sfx.tap(); say(G.current.keys); } };
-  return b;
-}
+// 그림 보기를 아래가 아니라 가운데에 크게 (다시 듣기는 위의 🔊 버튼)
 function qListen() {
   const pool = L.NOUNS.map(n => n.key);
   const key = L.pickWithReview(pool, settings.review, G.lastAnswer);
   G.lastAnswer = key;
   const n = noun(key);
   Object.assign(G.current, { answer: key, word: key, show: n.emoji, answerKey: "w_" + key });
-  pictureChoices(L.choicesFor(key, pool, firstTime() ? 2 : 3).map(k => ({ v: k, html: noun(k).emoji })));
-  $("play").appendChild(listenButton());
+  $("choices").style.display = "none";
+  const big = el("div", "choices big-choices");
+  $("play").appendChild(big);
+  pictureChoices(L.choicesFor(key, pool, firstTime() ? 2 : 3).map(k => ({ v: k, html: noun(k).emoji })), null, big);
   ask(`Where is the ${key}?`, ["wh_" + key], intro("listen_intro"));
   showDemo(G.current.glow());
   G.current.together = () => { glowAnswer(); say(["hint", "w_" + key]); };
 }
 
-// ---------- 3단계: 색깔 풍선 (처음엔 3가지 색, 한 번 끝내면 6가지) ----------
+// ---------- 3단계: 색깔 풍선 (처음엔 3가지 색, 한 번 끝내면 5가지) ----------
 function qBalloon() {
   const pool = (firstTime() ? L.COLORS.slice(0, 3) : L.COLORS).map(c => c.key);
   const key = L.pickWithReview(pool, settings.review, G.lastAnswer);
@@ -224,7 +219,7 @@ function qBalloon() {
     // 하늘 너비 안에 고르게 (풍선 너비 92px가 오른쪽 밖으로 나가지 않게)
     b.style.left = `calc((100% - 100px) * ${i / Math.max(1, colors.length - 1)} + ${rand(2, 6)}px)`;
     b.style.background = hex;
-    const dur = rand(13, 16);
+    const dur = rand(7, 9); // 풍선이 하늘을 지나가는 시간(초)
     b.style.animationDuration = dur + "s";
     b.style.animationDelay = `-${((heights[i] + 0.5) * dur / colors.length * 0.8).toFixed(1)}s`;
     b.onclick = () => {
@@ -252,10 +247,14 @@ function qAction() {
   const a = pickAvoid(firstTime() ? L.ACTIONS.slice(0, 4) : L.ACTIONS, x => x.key);
   Object.assign(G.current, { answer: a.key, show: a.ico, answerKey: "act_" + a.key });
   $("choices").style.display = "none";
+  // 인형 얼굴(사진 또는 곰) + 몸, 팔, 다리를 그려서 동작마다 움직여요
+  const doll = el("div", "figure");
+  const head = el("div", "fig-head");
+  paintDoll(head);
+  doll.append(el("div", "leg l"), el("div", "leg r"), el("div", "fig-body"),
+    el("div", "arm l", '<i class="fig-hand"></i>'), el("div", "arm r", '<i class="fig-hand"></i>'), head);
   const box = el("div", "act-stage");
-  const doll = el("div", "act-doll doll");
-  paintDoll(doll);
-  box.append(doll, el("div", "act-ico", a.ico));
+  box.append(doll);
   const star = el("button", "star-btn", "⭐");
   star.setAttribute("aria-label", "따라 했어요");
   star.disabled = true;
@@ -268,11 +267,11 @@ function qAction() {
   q.replay = async () => {
     G.busy = true;
     star.disabled = true;
-    doll.classList.remove("act-" + a.key);
+    doll.classList.remove("fig-" + a.key);
     await say([intro("act_intro"), "act_" + a.key]);
     if (G.current !== q) return;
     void doll.offsetWidth;
-    doll.classList.add("act-" + a.key);
+    doll.classList.add("fig-" + a.key);
     await sleep(2400);
     if (G.current !== q) return;
     G.busy = false;
@@ -284,81 +283,53 @@ function qAction() {
   q.replay();
 }
 
-// ---------- 5단계: 한-영 짝꿍 (왼쪽 그림=한국말, 오른쪽 🔊=영어) ----------
-const PAIR_ROUND = 3;
-function qPairs() {
-  if (G.score === 0) G.goal = PAIR_ROUND * 2;
-  $("choices").style.display = "none";
-  const theme = pick(["animal", "food"]);
-  const words = shuffle(L.NOUNS.filter(n => n.theme === theme)).slice(0, PAIR_ROUND);
-  const tones = ["#ff8fb1", "#4fc9a4", "#5aa9f5"];
-  const board = el("div", "pairs");
-  const leftCol = el("div", "pair-col"), rightCol = el("div", "pair-col");
-  let selected = null, matched = 0;
+// ---------- 5단계: 영어 친구 도와주기 (친구가 "Apple, please!" → 그림을 골라 건네주기) ----------
+// 고른 그림이 친구에게 날아가요 (화면 위에 잠깐 복사본을 띄워 움직여요)
+const FLY_MS = 700;
+function flyTo(from, to, html) {
+  const a = from.getBoundingClientRect(), z = to.getBoundingClientRect();
+  const x0 = a.left + a.width / 2, y0 = a.top + a.height / 2;
+  const f = el("div", "flyer", html);
+  f.style.left = x0 + "px";
+  f.style.top = y0 + "px";
+  document.body.appendChild(f);
+  void f.offsetWidth;
+  f.style.transform = `translate(${z.left + z.width / 2 - x0}px, ${z.top + z.height / 2 - y0}px) scale(.6)`;
+  return sleep(FLY_MS).then(() => f.remove());
+}
+function qHelp() {
+  const pool = L.NOUNS.filter(n => n.ko).map(n => n.key); // 한국어 녹음이 있는 단어만
+  const key = L.pickWithReview(pool, settings.review, G.lastAnswer);
+  G.lastAnswer = key;
+  const n = noun(key);
+  Object.assign(G.current, { answer: key, word: key, show: n.emoji, answerKey: "w_" + key });
   const q = G.current;
-
-  const lefts = words.map(w => {
-    const b = el("button", "pair ko", w.emoji);
-    b.setAttribute("aria-label", w.ko);
-    b.onclick = () => {
-      if (G.busy || b.classList.contains("matched")) return;
-      lefts.forEach(x => x.classList.remove("sel", "glow"));
-      b.classList.add("sel");
-      selected = w.key;
-      sfx.tap();
-      say(["k_" + w.key]);
-    };
-    b.dataset.v = w.key;
-    return b;
+  const talk = el("div", "help-talk", L.pleaseText(key));
+  const friend = el("div", "help-friend", pick(L.FRIENDS));
+  const scene = el("div", "help-scene");
+  scene.append(talk, friend);
+  $("play").appendChild(scene);
+  pictureChoices(L.choicesFor(key, pool, firstTime() ? 2 : 3).map(k => ({ v: k, html: noun(k).emoji })), async (v, b) => {
+    if (v !== key) { b.classList.add("wrong"); missed(); return; }
+    // 맞음: 그림이 친구에게 날아가고 → "사과!" → 친구가 "Thank you!"
+    G.busy = true;
+    stopSay();
+    sfx.tap();
+    b.classList.add("right");
+    await flyTo(b, friend, n.emoji);
+    if (G.current !== q) return;
+    friend.textContent = friend.textContent + n.emoji;
+    friend.classList.add("happy");
+    await say(["k_" + key]);
+    if (G.current !== q) return;
+    talk.textContent = "Thank you!";
+    await say(["thanks"]);
+    if (G.current !== q) return;
+    correct();
   });
-  const rights = shuffle(words).map((w, i) => {
-    const b = el("button", "pair en", "🔊");
-    b.style.background = tones[i];
-    b.setAttribute("aria-label", "영어 소리 " + (i + 1));
-    b.dataset.v = w.key;
-    b.onclick = async () => {
-      if (G.busy || b.classList.contains("matched")) return;
-      if (!selected) { sfx.tap(); say(["w_" + w.key]); return; }
-      if (selected !== w.key) {
-        b.classList.add("wrong");
-        setTimeout(() => b.classList.remove("wrong"), 600);
-        q.word = selected;
-        missed();
-        return;
-      }
-      // 짝 찾음: 두 카드에 그림을 보여 주고 "강아지! Dog!"
-      const left = lefts.find(x => x.dataset.v === w.key);
-      [left, b].forEach(x => x.classList.remove("sel", "glow"));
-      left.classList.add("matched");
-      b.classList.add("matched");
-      b.innerHTML = w.emoji;
-      selected = null;
-      q.misses = 0;
-      matched++;
-      G.score++;
-      renderDots();
-      sfx.right();
-      if (matched < PAIR_ROUND) { say(["k_" + w.key, "w_" + w.key]); return; }
-      G.busy = true;
-      await say(["k_" + w.key, "w_" + w.key]);
-      celebrate(words.map(x => x.emoji).join(""), null);
-    };
-    return b;
-  });
-  leftCol.append(...lefts);
-  rightCol.append(...rights);
-  board.append(leftCol, el("div", "pair-mid", "↔"), rightCol);
-  $("play").appendChild(board);
-  ask("같은 뜻 카드끼리 짝을 찾아 줘!", ["pair_intro"], null);
-  showDemo(lefts[0]);
-  // 힌트: 고른 그림의 짝(영어 카드)을 반짝, 안 골랐으면 그림부터 반짝
-  q.glow = () => selected
-    ? rights.find(x => x.dataset.v === selected)
-    : lefts.find(x => !x.classList.contains("matched"));
-  q.together = () => {
-    glowAnswer();
-    if (selected) say(["hint", "k_" + selected, "w_" + selected]);
-  };
+  ask(L.pleaseText(key), ["pl_" + key], intro("listen_intro"));
+  showDemo(q.glow());
+  q.together = () => { glowAnswer(); say(["hint", "pl_" + key]); };
 }
 
 // ---------- 6단계: 인사 놀이 (상황 → 알맞은 영어 인사 고르기) ----------
@@ -413,12 +384,27 @@ function bookPicture(p) {
     pic.append(p.who === "doll" ? dollFace() : el("span", "who", noun(p.who).emoji));
   } else if (p.kind === "hungry") pic.append(dollFace(), el("span", "who", "🍽️"));
   else if (p.kind === "eat") pic.append(dollFace(), el("span", "who chomp", noun(p.who).emoji));
+  else if (p.kind === "art") {
+    if (p.cls) pic.classList.add(p.cls);
+    p.art.forEach(t => {
+      const flies = t[0] === "^";
+      const tok = flies ? t.slice(1) : t;
+      let node;
+      if (tok === "@doll") node = dollFace();
+      else if (tok.startsWith("b:")) { node = el("span", "mini-balloon"); node.style.background = colorOf(tok.slice(2)).hex; }
+      else node = el("span", "who", tok);
+      if (flies) node.classList.add("fly");
+      pic.append(node);
+    });
+  }
   else pic.append(dollFace(), el("span", "who", "💖"));
   return pic;
 }
+// 별점이 오르는 장면 (문 열기, 먹기, point 표시한 장)
+const scoresPage = p => p.point || p.kind === "reveal" || p.kind === "eat";
 function qBook() {
   const story = L.STORIES[(settings.stars[G.stage] || 0) % L.STORIES.length];
-  const scored = story.pages.filter(p => p.kind === "reveal" || p.kind === "eat").length;
+  const scored = story.pages.filter(scoresPage).length;
   G.goal = scored;
   $("choices").style.display = "none";
   $("bubble").textContent = story.title;
@@ -442,7 +428,7 @@ function qBook() {
     book.append(pic, el("p", "book-text", p.text));
     if (p.kind === "door") sfx.knock();
     if (p.kind === "eat") sfx.chomp();
-    if (p.kind === "reveal" || p.kind === "eat") { G.score++; renderDots(); }
+    if (scoresPage(p)) { G.score++; renderDots(); }
     q.keys = [p.key];
     const first = at === 0;
     await say([first ? "book_intro" : null, first ? "book_parent" : null, p.key, first ? "book_next" : null]);

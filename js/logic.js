@@ -36,14 +36,42 @@
     { key: "carrot", emoji: "🥕", ko: "당근", theme: "food" },
     { key: "milk", emoji: "🥛", ko: "우유", theme: "food" },
     { key: "egg", emoji: "🥚", ko: "달걀", theme: "food" },
+    // 영어로만 듣는 단어 (한국어 녹음 없음: 단어 카드, 듣고 고르기에만 나와요)
+    { key: "nose", emoji: "👃", theme: "body" },
+    { key: "eye", emoji: "👁️", theme: "body" },
+    { key: "ear", emoji: "👂", theme: "body" },
+    { key: "mouth", emoji: "👄", theme: "body" },
+    { key: "hand", emoji: "✋", theme: "body" },
+    { key: "foot", emoji: "🦶", theme: "body" },
+    { key: "car", emoji: "🚗", theme: "vehicle" },
+    { key: "bus", emoji: "🚌", theme: "vehicle" },
+    { key: "train", emoji: "🚂", theme: "vehicle" },
+    { key: "airplane", emoji: "✈️", theme: "vehicle" },
+    { key: "bike", emoji: "🚲", theme: "vehicle" },
+    { key: "boat", emoji: "⛵", theme: "vehicle" },
+    { key: "fish", emoji: "🐟", theme: "animal2" },
+    { key: "lion", emoji: "🦁", theme: "animal2" },
+    { key: "elephant", emoji: "🐘", theme: "animal2" },
+    { key: "monkey", emoji: "🐵", theme: "animal2" },
+    { key: "frog", emoji: "🐸", theme: "animal2" },
+    { key: "chicken", emoji: "🐔", theme: "animal2" },
   ];
+  // 단어 카드는 이 순서로 주제를 돌아가며 보여 줘요
+  const THEMES = ["animal", "food", "body", "vehicle", "animal2"];
+  // 맞혔을 때 영어 칭찬 (소리 파일 이름)
+  const PRAISE = [
+    ["Good job!", "e_good"], ["Great listening!", "e_great"], ["Well done!", "e_well"],
+    ["You did it!", "e_did"], ["Awesome!", "e_awesome"], ["Super!", "e_super"],
+  ];
+  // 영어 친구 도와주기: 부탁하는 친구 (단어 그림과 겹치지 않는 동물)
+  const FRIENDS = ["🐼", "🦊", "🐨", "🐯", "🐧"];
+  const pleaseText = key => key[0].toUpperCase() + key.slice(1) + ", please!";
   // 색깔 (소리 파일: col_색, pop_색)
   const COLORS = [
     { key: "red", hex: "#ff5a5f", ko: "빨강" },
     { key: "blue", hex: "#3d8bfd", ko: "파랑" },
     { key: "yellow", hex: "#ffd23f", ko: "노랑" },
     { key: "green", hex: "#3cc47c", ko: "초록" },
-    { key: "orange", hex: "#ff9233", ko: "주황" },
     { key: "purple", hex: "#9b6bff", ko: "보라" },
   ];
   // 몸 동작 (소리 파일: act_동작)
@@ -105,6 +133,39 @@
         { kind: "full", text: "I'm full! Thank you!", key: "st2_end" },
       ],
     },
+    // 아래 3편은 그림을 art 목록으로 그려요: 이모지, "@doll"(인형 얼굴), "b:색"(풍선), 앞에 "^"면 날아가기
+    {
+      title: "Where is the duck?",
+      pages: [
+        { kind: "art", art: ["🦆", "❓"], text: "Where is the duck?", key: "st3_start" },
+        { kind: "art", art: ["📦"], cls: "nope", text: "Is it in the box? No!", key: "st3_box", point: true },
+        { kind: "art", art: ["🎩"], cls: "nope", text: "Is it under the hat? No!", key: "st3_hat", point: true },
+        { kind: "art", art: ["🧺"], cls: "nope", text: "Is it in the basket? No!", key: "st3_basket", point: true },
+        { kind: "art", art: ["🌳", "🦆"], cls: "found", text: "Is it behind the tree? Yes!", key: "st3_tree", point: true },
+        { kind: "art", art: ["🦆", "👋"], text: "Here it is! Hello, duck!", key: "st3_end" },
+      ],
+    },
+    {
+      title: "Up, up, up!",
+      pages: [
+        { kind: "art", art: ["b:red", "b:blue", "b:yellow", "b:green", "b:purple"], text: "I have five balloons!", key: "st4_start" },
+        ...["red", "blue", "yellow", "green", "purple"].map((c, i, all) => ({
+          kind: "art", art: ["^b:" + c, ...all.slice(i + 1).map(x => "b:" + x)],
+          text: `${c[0].toUpperCase() + c.slice(1)} balloon, up, up, up!`, key: "st4_" + c, point: true,
+        })),
+        { kind: "art", art: ["☁️", "👋"], text: "Bye-bye, balloons!", key: "st4_end" },
+      ],
+    },
+    {
+      title: "Good night!",
+      pages: [
+        { kind: "art", art: ["🌙", "🛏️"], cls: "night", text: "It's time for bed.", key: "st5_start" },
+        ...[["dog", "🐶"], ["cat", "🐱"], ["duck", "🦆"], ["pig", "🐷"], ["bear", "🐻"]].map(([a, e]) => ({
+          kind: "art", art: [e, "💤"], cls: "night", text: `Good night, ${a}!`, key: "st5_" + a, point: true,
+        })),
+        { kind: "art", art: ["@doll", "💤"], cls: "night", text: "Good night, my friend!", key: "st5_end" },
+      ],
+    },
   ];
 
   // 정답 + 다른 것 (모두 count개, 순서 섞음)
@@ -152,7 +213,7 @@
 
   const api = {
     rand, pick, shuffle, range, hasBatchim, josa,
-    NOUNS, COLORS, ACTIONS, PHRASES, GREETS, ABC, ABC_GROUPS, STORIES,
+    NOUNS, THEMES, PRAISE, FRIENDS, pleaseText, COLORS, ACTIONS, PHRASES, GREETS, ABC, ABC_GROUPS, STORIES,
     choicesFor, REVIEW_MAX, addReview, removeReview, pickWithReview,
     DOLL_NAMES, randomDollName, backTarget, resumeScore,
   };
